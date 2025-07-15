@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const roomsSchema = new mongoose.Schema({
     roomCode: { type: String, required: true, unique: true },
     createdBy: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User', 
+        type: String,
         required: true 
     },
     isActive: { type: Boolean, default: true },

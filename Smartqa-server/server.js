@@ -3,9 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const roomRoutes = require('./src/routes/roomRoutes');
-const authRoutes = require('./src/routes/authRoutes'); 
 
-const app = express();
+const app = express(); // Create instance of express to setup the server
 
 // Middlewares
 app.use(express.json());
@@ -20,16 +19,14 @@ const corsConfig = {
 };
 app.use(cors(corsConfig));
 
-// Routes
-app.use('/api/auth', authRoutes); 
-app.use('/api/room', roomRoutes); 
+app.use('/room', roomRoutes);
 
 // Start the server
 const PORT = process.env.PORT;
 app.listen(PORT, (error) => {
     if (error) {
-        console.log('Server not started due to: ', error.message);
+        console.log('Server not started due to: ', error);
     } else {
-        console.log(`Server running at PORT: ${PORT}`);
+        console.log(`Server running at port: ${PORT}`)
     }
 });
