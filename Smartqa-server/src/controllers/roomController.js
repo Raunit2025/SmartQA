@@ -51,8 +51,8 @@ const roomController = {
                 createdBy: createdBy
             });
             const io = request.app.get("io");
-            io.to(roomCode).emit("new-question", question);
-            
+            io.to(code).emit("new-question", question);
+
             response.json(question);
         } catch (error) {
             console.log(error);

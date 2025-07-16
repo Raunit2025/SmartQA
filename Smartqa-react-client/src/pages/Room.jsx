@@ -15,13 +15,13 @@ function Room() {
     const fetchRoom = async () => {
         try {
             const response = await axios.get(`${serverEndpoint}/room/${code}`, {
-                withCredentials: true
+                withCredentials: true,
             });
             setRoom(response.data);
         } catch (error) {
             console.log(error);
             setErrors({
-                message: 'Unable to fetch room details, Please try again'
+                message: "Unable to fetch room details, Please try again",
             });
         }
     };
@@ -29,16 +29,17 @@ function Room() {
     const fetchQuestions = async () => {
         try {
             const response = await axios.get(`${serverEndpoint}/room/${code}/question`, {
-                withCredentials: true
+                withCredentials: true,
             });
             setQuestions(response.data);
         } catch (error) {
             console.log(error);
             setErrors({
-                message: 'Unable to fetch questions, Please try again'
+                message: "Unable to fetch questions, Please try again",
             });
         }
-    }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -61,28 +62,42 @@ function Room() {
 
     return (
         <div className="min-h-screen bg-indigo-950 py-8 px-4">
-            <h2 className="text-white text-center text-2xl font-bold mb-6">Room {code}</h2>
+            <h2 className="text-white text-center text-2xl font-bold mb-6">
+                Room {code}
+            </h2>
 
             <div className="flex justify-center mb-6">
-                <ul className="space-y-3 w-full max-w-xl">
+                <div className="w-full max-w-2xl space-y-4 bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-[60vh]">
                     {questions.map((ques) => (
-                        <li
+                        <div
                             key={ques._id}
-                            className="bg-white text-gray-800 px-4 py-3 rounded-lg shadow-sm"
+                            className="flex items-start gap-4 bg-gray-50 rounded-md p-4"
                         >
-                            {ques.content}
-                        </li>
+                            {/* Avatar */}
+                            <img
+                                src={`https://api.dicebear.com/7.x/initials/svg?seed=${ques.createdBy}`}
+                                alt="avatar"
+                                className="w-10 h-10 rounded-full border"
+                            />
+
+                            {/* Message box */}
+                            <div>
+                                <p className="text-sm font-semibold text-indigo-700">
+                                    {ques.createdBy || "Anonymous"}
+                                </p>
+                                <p className="text-gray-800 text-base">{ques.content}</p>
+                            </div>
+                        </div>
                     ))}
-                </ul>
+                </div>
             </div>
 
             <div className="flex justify-center">
-                <div className="w-full max-w-xl">
+                <div className="w-full max-w-2xl">
                     <Question roomCode={code} />
                 </div>
             </div>
         </div>
-
     );
 }
 
