@@ -50,7 +50,9 @@ const roomController = {
                 content: content,
                 createdBy: createdBy
             });
-
+            const io = request.app.get("io");
+            io.to(roomCode).emit("new-question", question);
+            
             response.json(question);
         } catch (error) {
             console.log(error);

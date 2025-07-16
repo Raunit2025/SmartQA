@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
-const { server } = require('socket.io');
+const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const roomRoutes = require('./src/routes/roomRoutes');
 
@@ -22,9 +22,9 @@ const corsConfig = {
 };
 app.use(cors(corsConfig));
 
-const server = http.createServer(app);
+const OurServer = http.createServer(app);
 
-const io = new Server(server, {
+const io = new Server(OurServer, {
     cors: {
         origin: process.env.CLIENT_URL,
         methods: ["GET", "POST", "DELETE", "UPDATE"]
