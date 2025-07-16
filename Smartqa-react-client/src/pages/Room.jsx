@@ -60,6 +60,22 @@ function Room() {
         };
     }, []);
 
+    const handleDelete = async (questionId) => {
+        try {
+            const confirm = window.confirm("Are you sure you want to delete this question?");
+            if (!confirm) return;
+
+            await axios.delete(`${serverEndpoint}/question/${questionId}`, {
+                withCredentials: true,
+            });
+
+            setQuestions((prev) => prev.filter((q) => q._id !== questionId));
+        } catch (error) {
+            console.error("Error deleting question:", error);
+            alert("Error deleting question. Please try again.");
+        }
+    };
+
     return (
         <div className="min-h-screen bg-indigo-950 py-8 px-4">
             <h2 className="text-white text-center text-2xl font-bold mb-6">
@@ -71,7 +87,7 @@ function Room() {
                     {questions.map((ques) => (
                         <div
                             key={ques._id}
-                            className="flex items-start gap-4 bg-gray-50 rounded-md p-4"
+                            className="flex items-start gap-4 bg-gray-50 rounded-md p-4 relative group"
                         >
                             {/* Avatar */}
                             <img
@@ -81,14 +97,24 @@ function Room() {
                             />
 
                             {/* Message box */}
-                            <div>
+                            <div className="flex-1">
                                 <p className="text-sm font-semibold text-indigo-700">
                                     {ques.createdBy || "Anonymous"}
                                 </p>
                                 <p className="text-gray-800 text-base">{ques.content}</p>
                             </div>
+
+                            {/* Delete Button - visible on hover */}
+                            <button
+                                onClick={() => handleDelete(ques._id)}
+                                className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-sm hidden group-hover:block"
+                                title="Delete"
+                            >
+                                ✖
+                            </button>
                         </div>
                     ))}
+
                 </div>
             </div>
 

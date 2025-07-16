@@ -97,20 +97,25 @@ const roomController = {
     deleteQuestion: async (req, res) => {
         try {
             const { questionId } = req.params;
-            const question = await Questions.findOneAndDelete({ _id: questionId, user: req.user._id });
+
+            const question = await Questions.findByIdAndDelete(questionId);
+
             if (!question) {
                 return res.status(404).json({
-                    message: 'Question not found in database'
+                    message: 'Question not found in database',
                 });
             }
+
             res.status(200).json({
-                message: 'Question Deleted'
+                message: 'Question Deleted',
             });
         } catch (error) {
             console.log(error);
             res.status(500).json({ message: 'Internal Server Error' });
         }
-    }
+    },
+
+
 };
 
 module.exports = roomController;
