@@ -5,8 +5,8 @@ function Room() {
     const { code } = useParams();
 
     return (
-        <div className="container py-5">
-            <h2>Room {code}</h2>
+        <div className=" bg-indigo-950">
+            <h2 className="text-white text-center font-bold">Room {code}</h2>
             <Question roomCode={code} />
         </div>
     );

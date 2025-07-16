@@ -28,7 +28,7 @@ function Question({ roomCode }) {
                     `${serverEndpoint}/room/${roomCode}/question`,
                     {
                         content: question,
-                        user: participantName,
+                        createdBy: participantName,
                     },
                     {
                         withCredentials: true,
@@ -46,7 +46,7 @@ function Question({ roomCode }) {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+        <div className="min-h-screen flex items-center justify-center bg-indigo-950 px-4">
             <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
                 <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Ask a Question</h2>
 
