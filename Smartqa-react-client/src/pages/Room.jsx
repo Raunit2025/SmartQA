@@ -11,12 +11,12 @@ function Room() {
     const [questions, setQuestions] = useState([]);
 
     const fetchRoom = async () => {
-        try{
-            const response = await axios.get(`${serverEndpoint}/room/${code}`,{
+        try {
+            const response = await axios.get(`${serverEndpoint}/room/${code}`, {
                 withCredentials: true
             });
             setRoom(response.data);
-        }catch(error){
+        } catch (error) {
             console.log(error);
             setErrors({
                 message: 'Unable to fetch room details, Please try again'
@@ -25,12 +25,12 @@ function Room() {
     };
 
     const fetchQuestions = async () => {
-        try{
-            const response = await axios.get(`${serverEndpoint}/room/${code}/question`,{
+        try {
+            const response = await axios.get(`${serverEndpoint}/room/${code}/question`, {
                 withCredentials: true
             });
             setQuestions(response.data);
-        }catch(error){
+        } catch (error) {
             console.log(error);
             setErrors({
                 message: 'Unable to fetch questions, Please try again'
@@ -58,10 +58,29 @@ function Room() {
     }, []);
 
     return (
-        <div className=" bg-indigo-950">
-            <h2 className="text-white text-center font-bold">Room {code}</h2>
-            <Question roomCode={code} />
+        <div className="min-h-screen bg-indigo-950 py-8 px-4">
+            <h2 className="text-white text-center text-2xl font-bold mb-6">Room {code}</h2>
+
+            <div className="flex justify-center mb-6">
+                <ul className="space-y-3 w-full max-w-xl">
+                    {questions.map((ques) => (
+                        <li
+                            key={ques._id}
+                            className="bg-white text-gray-800 px-4 py-3 rounded-lg shadow-sm"
+                        >
+                            {ques.content}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            <div className="flex justify-center">
+                <div className="w-full max-w-xl">
+                    <Question roomCode={code} />
+                </div>
+            </div>
         </div>
+
     );
 }
 
