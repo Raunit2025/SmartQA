@@ -2,10 +2,12 @@ import { useParams } from "react-router-dom";
 import Question from "./Question";
 import { useState, useEffect } from "react";
 import { serverEndpoint } from "../config/appConfig";
+import socket from "../config/socket";
+import axios from "axios";
 
 function Room() {
     const { code } = useParams();
-    const [loading, serLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState({});
     const [room, setRoom] = useState(null);
     const [questions, setQuestions] = useState([]);
