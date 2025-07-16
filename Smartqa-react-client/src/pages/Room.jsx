@@ -46,7 +46,15 @@ function Room() {
         };
         fetchData();
 
-        socket.emit("join-code", code);
+        socket.emit("join-room", code);
+
+        socket.on("new-question", (question) => {
+            setQuestions((prev) => [question, ...prev]);
+        });
+
+        return () => {
+            socket.off("new-question");
+        };
     }, []);
 
     return (
