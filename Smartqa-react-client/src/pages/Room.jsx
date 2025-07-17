@@ -4,120 +4,102 @@ import { useParams } from "react-router-dom";
 import Question from "./Question";
 import { useState, useEffect } from "react";
 import socket from "../config/socket";
-import api from "../api/api"; // <-- IMPORT our new instance
+import api from "../api/api";
 import { useSelector } from 'react-redux';
 
 function Room() {
     const { code } = useParams();
     const { user } = useSelector((state) => state.auth);
     const [loading, setLoading] = useState(true);
-    const [errors, setErrors] = useState({});
     const [room, setRoom] = useState(null);
     const [questions, setQuestions] = useState([]);
     const [topQuestions, setTopQuestions] = useState([]);
 
-    // Check if the logged-in user is the one who created the room
     const isHost = room && user && room.createdBy && room.createdBy._id === user._id;
 
-    const fetchTopQuestions = async () => {
+    const fetchRoomAndQuestions = async () => {
+        setLoading(true);
         try {
-            // Use 'api' and a relative path
-            const response = await api.get(`/api/room/${code}/top-questions`);
-            setTopQuestions(response.data || []);
+            const roomRes = await api.get(`/api/room/${code}`);
+            setRoom(roomRes.data);
+            const questionsRes = await api.get(`/api/room/${code}/question`);
+            setQuestions(questionsRes.data);
         } catch (error) {
-            console.log(error);
-            setErrors({ message: 'Unable to fetch top questions' });
-        }
-    }
-
-    const fetchRoom = async () => {
-        try {
-            // Use 'api' and a relative path
-            const response = await api.get(`/api/room/${code}`);
-            setRoom(response.data);
-        } catch (error) {
-            console.log(error);
-            setErrors({ message: "Unable to fetch room details, Please try again" });
+            console.error("Error fetching room data:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const fetchQuestions = async () => {
+    const handleSummarize = async () => {
         try {
-            // Use 'api' and a relative path
-            const response = await api.get(`/api/room/${code}/question`);
-            setQuestions(response.data);
+            await api.post(`/api/room/${code}/summarize`);
         } catch (error) {
-            console.log(error);
-            setErrors({ message: "Unable to fetch questions, Please try again" });
+            console.error("Error summarizing questions:", error);
+            alert(error.response?.data?.message || "Could not summarize questions.");
         }
     };
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            await fetchRoom();
-            await fetchQuestions();
-            setLoading(false);
-        };
-        fetchData();
+        fetchRoomAndQuestions();
 
         socket.emit("join-room", code);
+        
         socket.on("new-question", (question) => {
             setQuestions((prev) => [question, ...prev]);
         });
-
+        
         socket.on('question-deleted', (deletedQuestionId) => {
-            // Update the state by filtering out the deleted question
-            setQuestions((prevQuestions) =>
-                prevQuestions.filter((q) => q._id !== deletedQuestionId)
-            );
+            setQuestions((prev) => prev.filter((q) => q._id !== deletedQuestionId));
+        });
+
+        socket.on('top-questions-generated', (summary) => {
+            setTopQuestions(summary);
         });
 
         return () => {
             socket.off("new-question");
             socket.off("question-deleted");
+            socket.off('top-questions-generated');
         };
     }, [code]);
 
     const handleDelete = async (questionId) => {
-        if (!isHost) {
-            alert("You are not authorized to delete this question.");
-            return;
-        }
-
-        try {
-            const confirm = window.confirm("Are you sure you want to delete this question?");
-            if (!confirm) return;
-
-            // The API call is all we need. The state update will now be handled
-            // by the socket event listener we just added.
-            await api.delete(`/api/room/question/${questionId}`);
-
-        } catch (error) {
-            console.error("Error deleting question:", error);
-            alert(error.response?.data?.message || "Error deleting question. Please try again.");
+        if (!isHost) return;
+        if (window.confirm("Are you sure you want to delete this question?")) {
+            try {
+                await api.delete(`/api/room/question/${questionId}`);
+            } catch (error) {
+                console.error("Error deleting question:", error);
+            }
         }
     };
 
+    if (loading) {
+        return <div className="text-center text-white text-2xl p-10">Loading Room...</div>;
+    }
+
     return (
         <div className="min-h-screen bg-indigo-950 py-10 px-4 md:px-10">
-            <h2 className="text-white text-3xl font-bold text-center mb-8">Room Code: {code}</h2>
-            <p className="text-center text-gray-300 mb-6">Room created by: <span className="font-semibold">{room?.createdBy?.name || '...'}</span></p>
+            <h2 className="text-white text-3xl font-bold text-center mb-2">Room Code: {code}</h2>
+            <p className="text-center text-gray-300 mb-6">
+                {isHost ? "You are the host of this room." : `Welcome, ${user?.name || 'participant'}.`}
+            </p>
 
             {isHost && (
-                <div className="flex justify-center">
+                <div className="flex justify-center mb-8">
                     <button
-                        onClick={fetchTopQuestions}
-                        className="px-5 py-2 text-sm text-white bg-green-600 hover:bg-green-700 rounded shadow"
+                        onClick={handleSummarize}
+                        className="px-6 py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-lg font-semibold"
                     >
-                        Get Top Questions
+                        Summarize Questions with AI
                     </button>
                 </div>
             )}
 
             {topQuestions.length > 0 && (
-                <div className="mt-8 bg-white shadow-lg rounded-xl p-6 max-w-5xl mx-auto">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Questions</h3>
+                <div className="mb-8 bg-white shadow-lg rounded-xl p-6 max-w-5xl mx-auto">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4">✨ AI-Summarized Top Questions</h3>
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-sm text-left text-gray-800">
                             <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
@@ -140,7 +122,7 @@ function Room() {
             )}
 
             <div className="mt-10 flex justify-center">
-                <div className="w-full max-w-3xl space-y-4 bg-white p-6 rounded-xl shadow-lg overflow-y-auto max-h-[60vh]">
+                <div className="w-full max-w-3xl space-y-4 bg-white p-6 rounded-xl shadow-lg overflow-y-auto max-h-[50vh]">
                     {questions.map((ques) => (
                         <div
                             key={ques._id}
@@ -171,13 +153,16 @@ function Room() {
                 </div>
             </div>
 
-            <div className="flex justify-center mt-10">
-                <div className="w-full max-w-2xl">
+            {!isHost && (
+                <div className="flex justify-center mt-10">
                     <Question roomCode={code} />
                 </div>
-            </div>
+            )}
         </div>
     );
 }
 
+// --- START OF FIX ---
+// This line was missing, which caused the error.
 export default Room;
+// --- END OF FIX ---

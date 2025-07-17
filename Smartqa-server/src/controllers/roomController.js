@@ -6,7 +6,7 @@ const { callGemini } = require("../services/geminiService");
 
 const roomController = {
 
-    // ... (createRoom, getByRoomCode, createQuestion, getQuestions functions are unchanged)
+    // ... (createRoom, getByRoomCode, getQuestions, deleteQuestion are unchanged)
     createRoom: async (request, response) => {
         try {
             const createdBy = request.user._id;
@@ -32,23 +32,6 @@ const roomController = {
             response.status(500).json({ message: 'Internal server error' });
         }
     },
-    createQuestion: async (request, response) => {
-        try {
-            const { content } = request.body;
-            const { code } = request.params;
-            const question = await Questions.create({
-                roomCode: code,
-                content: content,
-                createdBy: request.user.name
-            });
-            const io = request.app.get("io");
-            io.to(code).emit("new-question", question);
-            response.status(201).json(question);
-        } catch (error) {
-            console.log(error);
-            response.status(500).json({ message: 'Internal server error' });
-        }
-    },
     getQuestions: async (request, response) => {
         try {
             const code = request.params.code;
@@ -59,52 +42,87 @@ const roomController = {
             response.status(500).json({ message: 'Internal server error' });
         }
     },
-    
-    //DeleteQuestion
     deleteQuestion: async (req, res) => {
         try {
             const { questionId } = req.params;
             const question = await Questions.findById(questionId);
-
             if (!question) {
                 return res.status(404).json({ message: 'Question not found in database' });
             }
-            
             const room = await Rooms.findOne({ roomCode: question.roomCode });
-
-            // --- START OF FIX ---
-            // The authorization check now correctly accesses the _id from the populated createdBy object.
             if (!room.createdBy || room.createdBy._id.toString() !== req.user._id.toString()) {
                 return res.status(403).json({ message: 'User not authorized to delete questions in this room' });
             }
-            // --- END OF FIX ---
-            
             const roomCode = question.roomCode;
             await question.deleteOne();
-
             const io = req.app.get("io");
             io.to(roomCode).emit("question-deleted", questionId);
-
-            res.status(200).json({
-                message: 'Question Deleted',
-                questionId: questionId
-            });
+            res.status(200).json({ message: 'Question Deleted', questionId: questionId });
         } catch (error) {
             console.log(error);
             res.status(500).json({ message: 'Internal Server Error' });
         }
     },
 
-    generateTopQuestions: async (request, response) => {
+    // POST /room/:code/question
+    createQuestion: async (request, response) => {
         try {
-            const code = request.params.code;
-            const questions = await Questions.find({ roomCode: code });
-            if (questions.length === 0) return response.json([]);
-            const topQuestions = await callGemini(questions);
-            response.json(topQuestions);
+            const { content } = request.body;
+            const { code } = request.params;
+            const room = await Rooms.findOne({ roomCode: code });
+
+            // --- START OF ASSIGNMENT LOGIC ---
+            // Authorization Check: Prevent room creator from posting questions
+            if (room.createdBy._id.toString() === request.user._id.toString()) {
+                return response.status(403).json({ message: "Room creators cannot post questions." });
+            }
+            // --- END OF ASSIGNMENT LOGIC ---
+
+            const question = await Questions.create({
+                roomCode: code,
+                content: content,
+                createdBy: request.user.name
+            });
+            const io = request.app.get("io");
+            io.to(code).emit("new-question", question);
+
+            response.status(201).json(question);
         } catch (error) {
             console.log(error);
             response.status(500).json({ message: 'Internal server error' });
+        }
+    },
+
+    // POST /room/:code/summarize
+    generateTopQuestions: async (request, response) => {
+        try {
+            const code = request.params.code;
+            const room = await Rooms.findOne({ roomCode: code });
+
+            // --- START OF ASSIGNMENT LOGIC ---
+            // Authorization Check: Only the room creator can summarize
+            if (room.createdBy._id.toString() !== request.user._id.toString()) {
+                return response.status(403).json({ message: "Only the room creator can summarize questions." });
+            }
+            
+            const questions = await Questions.find({ roomCode: code });
+            if (questions.length === 0) {
+                return response.status(400).json({ message: "No questions to summarize." });
+            }
+
+            const topQuestions = await callGemini(questions);
+
+            // Broadcast the summarized questions to everyone in the room
+            const io = request.app.get("io");
+            io.to(code).emit("top-questions-generated", topQuestions);
+            // --- END OF ASSIGNMENT LOGIC ---
+
+            response.status(200).json({ message: "Summary generated and broadcasted to all participants." });
+        } catch (error) {
+            console.log(error);
+            response.status(500).json({
+                message: 'Internal server error during summary generation.'
+            });
         }
     }
 };
