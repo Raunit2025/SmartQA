@@ -8,6 +8,7 @@ router.get('/:code',roomController.getByRoomCode);
 router.post('/:code/question',roomController.createQuestion);
 router.get('/:code/question',roomController.getQuestions);
 router.delete("/question/:questionId", roomController.deleteQuestion);
+router.get('/:code/top-questions', roomController.generateTopQuestions);
 
 
 module.exports = router;

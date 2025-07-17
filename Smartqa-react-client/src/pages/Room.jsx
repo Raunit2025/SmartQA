@@ -11,6 +11,19 @@ function Room() {
     const [errors, setErrors] = useState({});
     const [room, setRoom] = useState(null);
     const [questions, setQuestions] = useState([]);
+    const [topQuestions, setTopQuestions] = useState([]);
+
+    const fetchTopQuestions = async () => {
+        try {
+            const response = await axios.get(`${serverEndpoint}/room/${code}/top-questions`, {
+                withCredentials: true
+            });
+            setTopQuestions(response.data || []);
+        } catch (error) {
+            console.log(error);
+            setErrors({ message: 'Unable to fetch top questions' });
+        }
+    }
 
     const fetchRoom = async () => {
         try {
@@ -20,9 +33,7 @@ function Room() {
             setRoom(response.data);
         } catch (error) {
             console.log(error);
-            setErrors({
-                message: "Unable to fetch room details, Please try again",
-            });
+            setErrors({ message: "Unable to fetch room details, Please try again" });
         }
     };
 
@@ -34,9 +45,7 @@ function Room() {
             setQuestions(response.data);
         } catch (error) {
             console.log(error);
-            setErrors({
-                message: "Unable to fetch questions, Please try again",
-            });
+            setErrors({ message: "Unable to fetch questions, Please try again" });
         }
     };
 
@@ -50,7 +59,6 @@ function Room() {
         fetchData();
 
         socket.emit("join-room", code);
-
         socket.on("new-question", (question) => {
             setQuestions((prev) => [question, ...prev]);
         });
@@ -77,17 +85,48 @@ function Room() {
     };
 
     return (
-        <div className="min-h-screen bg-indigo-950 py-8 px-4">
-            <h2 className="text-white text-center text-2xl font-bold mb-6">
-                Room {code}
-            </h2>
+        <div className="min-h-screen bg-indigo-950 py-10 px-4 md:px-10">
+            <h2 className="text-white text-3xl font-bold text-center mb-8">Room Code: {code}</h2>
 
-            <div className="flex justify-center mb-6">
-                <div className="w-full max-w-2xl space-y-4 bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-[60vh]">
+            <div className="flex justify-center">
+                <button
+                    onClick={fetchTopQuestions}
+                    className="px-5 py-2 text-sm text-white bg-green-600 hover:bg-green-700 rounded shadow"
+                >
+                    Get Top Questions
+                </button>
+            </div>
+
+            {topQuestions.length > 0 && (
+                <div className="mt-8 bg-white shadow-lg rounded-xl p-6 max-w-5xl mx-auto">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Questions</h3>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full text-sm text-left text-gray-800">
+                            <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+                                <tr>
+                                    <th className="px-4 py-3">#</th>
+                                    <th className="px-4 py-3">Question</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {topQuestions.map((question, index) => (
+                                    <tr key={index} className="border-t border-gray-200 hover:bg-gray-50">
+                                        <td className="px-4 py-2 font-medium">{index + 1}</td>
+                                        <td className="px-4 py-2">{question}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            <div className="mt-10 flex justify-center">
+                <div className="w-full max-w-3xl space-y-4 bg-white p-6 rounded-xl shadow-lg overflow-y-auto max-h-[60vh]">
                     {questions.map((ques) => (
                         <div
                             key={ques._id}
-                            className="flex items-start gap-4 bg-gray-50 rounded-md p-4 relative group"
+                            className="flex items-start gap-4 bg-gray-50 rounded-lg p-4 relative border border-gray-200 hover:shadow-md transition"
                         >
                             {/* Avatar */}
                             <img
@@ -96,31 +135,28 @@ function Room() {
                                 className="w-10 h-10 rounded-full border"
                             />
 
-                            {/* Message box */}
+                            {/* Question content */}
                             <div className="flex-1">
                                 <p className="text-sm font-semibold text-indigo-700">
                                     {ques.createdBy || "Anonymous"}
                                 </p>
-                                <p className="text-gray-800 text-base">{ques.content}</p>
+                                <p className="text-gray-900 text-base mt-1">{ques.content}</p>
                             </div>
 
-                            {/* Delete Button - visible on hover */}
+                            {/* Delete button */}
                             <button
                                 onClick={() => handleDelete(ques._id)}
-                                className="absolute top-2 right-2 text-red-500 hover:text-white hover:bg-red-500 px-2 py-1 rounded transition"
-                                title="Delete"
+                                className="absolute top-2 right-2 text-red-500 hover:bg-red-500 hover:text-white px-2 py-1 rounded transition"
+                                title="Delete question"
                             >
-                                Delete
+                                ✕
                             </button>
-
-
                         </div>
                     ))}
-
                 </div>
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center mt-10">
                 <div className="w-full max-w-2xl">
                     <Question roomCode={code} />
                 </div>

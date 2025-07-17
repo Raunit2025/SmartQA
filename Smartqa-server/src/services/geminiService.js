@@ -7,7 +7,7 @@ const callGemini = async (questions) => {
         group them if they are similar, and return a sorted list 
         with the most frequently asked or relevent question summarized:
 
-        ${questions.map((ques, index) => `${index+1}. ${ques.content}`
+        ${questions.map((ques, index) => `${index + 1}. ${ques.content}`
     ).join("\n")}
 
     Respond with only the summarized list, one per line.    
@@ -20,8 +20,11 @@ const callGemini = async (questions) => {
         }]
     };
     const requestHeaders = {
-        "Content-Type": "application/json",
-        "X-goog-api-key": process.env.GEMINI_API_KEY
+        headers: {
+            "Content-Type": "application/json",
+            "X-goog-api-key": process.env.GEMINI_API_KEY
+        }
+
     };
 
     const response = await axios.post(url, requestBody, requestHeaders);
