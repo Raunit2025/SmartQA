@@ -1,6 +1,7 @@
+// src/pages/Question.jsx
+
 import { useState } from "react";
-import axios from "axios";
-import { serverEndpoint } from "../config/appConfig";
+import api from "../api/api"; // <-- IMPORT our new instance
 
 function Question({ roomCode }) {
     const [question, setQuestion] = useState("");
@@ -22,10 +23,9 @@ function Question({ roomCode }) {
     const handleSubmit = async () => {
         if (validate()) {
             try {
-                // The backend now gets the user from the JWT token automatically.
-                // We just need to send the content of the question.
-                await axios.post(
-                    `${serverEndpoint}/api/room/${roomCode}/question`,
+                // Use 'api' and a relative path
+                await api.post(
+                    `/api/room/${roomCode}/question`,
                     { content: question }
                 );
 

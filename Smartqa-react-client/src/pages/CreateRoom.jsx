@@ -1,29 +1,26 @@
 // src/pages/CreateRoom.jsx
 
 import { useNavigate } from "react-router-dom";
-import { serverEndpoint } from "../config/appConfig";
-import axios from "axios";
+import api from "../api/api"; // <-- THIS IS THE MOST IMPORTANT CHANGE
 import { useState } from "react";
-import { useSelector } from 'react-redux'; // Import useSelector
+import { useSelector } from 'react-redux';
 
 function CreateRoom() {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const navigate = useNavigate();
     
-    // Get user details from Redux store to display their name
     const { user } = useSelector((state) => state.auth);
 
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            // The backend now gets the user from the JWT token,
-            // so we don't need to send the name in the body.
-            const response = await axios.post(`${serverEndpoint}/api/room`, {});
+            // Now we use 'api' which has our interceptor
+            const response = await api.post(`/api/room`, {}); 
             navigate(`/room/${response.data.roomCode}`);
         } catch (error) {
-            console.error(error);
-            setErrors({ message: "Error creating room, please try again" });
+            console.error("Error in CreateRoom.jsx handleSubmit:", error);
+            setErrors({ message: error.response?.data?.message || "Error creating room, please try again" });
         } finally {
             setLoading(false);
         }

@@ -8,7 +8,6 @@ const register = async (userData) => {
     const response = await api.post('/api/auth/register', userData);
 
     if (response.data) {
-        // We still use localStorage here to keep the user logged in after a refresh
         localStorage.setItem('user', JSON.stringify(response.data));
     }
 
