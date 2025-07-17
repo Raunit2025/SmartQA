@@ -65,7 +65,7 @@ function Room() {
             const confirm = window.confirm("Are you sure you want to delete this question?");
             if (!confirm) return;
 
-            await axios.delete(`${serverEndpoint}/question/${questionId}`, {
+            await axios.delete(`${serverEndpoint}/room/question/${questionId}`, {
                 withCredentials: true,
             });
 
@@ -107,11 +107,13 @@ function Room() {
                             {/* Delete Button - visible on hover */}
                             <button
                                 onClick={() => handleDelete(ques._id)}
-                                className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-sm hidden group-hover:block"
+                                className="absolute top-2 right-2 text-red-500 hover:text-white hover:bg-red-500 px-2 py-1 rounded transition"
                                 title="Delete"
                             >
-                                ✖
+                                Delete
                             </button>
+
+
                         </div>
                     ))}
 
