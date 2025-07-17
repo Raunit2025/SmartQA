@@ -22,20 +22,13 @@ function Question({ roomCode }) {
     const handleSubmit = async () => {
         if (validate()) {
             try {
-                const participantName = localStorage.getItem("participant-name") || "Anonymous";
-
-                const response = await axios.post(
-                    `${serverEndpoint}/room/${roomCode}/question`,
-                    {
-                        content: question,
-                        createdBy: participantName,
-                    },
-                    {
-                        withCredentials: true,
-                    }
+                // The backend now gets the user from the JWT token automatically.
+                // We just need to send the content of the question.
+                await axios.post(
+                    `${serverEndpoint}/api/room/${roomCode}/question`,
+                    { content: question }
                 );
 
-                console.log(response);
                 setQuestion("");
                 setErrors({});
             } catch (error) {
@@ -46,9 +39,9 @@ function Question({ roomCode }) {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-indigo-950 px-4">
-            <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-                <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Ask a Question</h2>
+        <div className="w-full max-w-2xl mx-auto">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-bold mb-4 text-center text-gray-800">Ask a Question</h2>
 
                 <div className="mb-4">
                     <textarea
@@ -74,7 +67,7 @@ function Question({ roomCode }) {
                     onClick={handleSubmit}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
                 >
-                    Submit
+                    Submit Question
                 </button>
 
                 {errors.message && (

@@ -1,3 +1,5 @@
+// Smartqa-server/server.js
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -5,7 +7,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const roomRoutes = require('./src/routes/roomRoutes');
-
+const authRoutes = require('./src/routes/authRoutes'); // Import auth routes
 
 const app = express(); // Create instance of express to setup the server
 
@@ -36,7 +38,7 @@ io.on("connection", (socket) => {
 
     socket.on("join-room", (roomCode) => {
         socket.join(roomCode);
-        console.log(`User joined room: ${roomCode}`);
+        console.log(`User ${socket.id} joined room: ${roomCode}`);
     });
 
     socket.on("disconnect", () => {
@@ -46,10 +48,12 @@ io.on("connection", (socket) => {
 
 app.set("io",io);
 
-app.use('/room', roomRoutes);
+// API Routes
+app.use('/api/auth', authRoutes); // Add auth routes
+app.use('/api/room', roomRoutes); // Prefix room routes with /api
 
 // Start the server
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 8080;
 OurServer.listen(PORT, (error) => {
     if (error) {
         console.log('Server not started due to: ', error);

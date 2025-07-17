@@ -7,7 +7,8 @@ const roomController = {
     // POST: /room/
     createRoom: async (request, response) => {
         try {
-            const { createdBy } = request.body;
+            // The user ID is now available from the 'protect' middleware
+            const createdBy = request.user._id;
 
             const code = Math.random().toString(36)
                 .substring(2, 8).toUpperCase();
@@ -16,8 +17,11 @@ const roomController = {
                 roomCode: code,
                 createdBy: createdBy
             });
+            
+            // We can populate the createdBy field to return the user's name
+            const populatedRoom = await Rooms.findById(room._id);
 
-            response.json(room);
+            response.status(201).json(populatedRoom);
         } catch (error) {
             console.log(error);
             response.status(500).json({ message: 'Internal server error' });
@@ -37,25 +41,27 @@ const roomController = {
             response.json(room);
         } catch (error) {
             console.log(error);
+            response.status(500).json({ message: 'Internal server error' });
         }
     },
 
     // POST /room/:code/question
     createQuestion: async (request, response) => {
         try {
-            const { content, createdBy } = request.body;
+            const { content } = request.body;
             const { code } = request.params;
 
             const question = await Questions.create({
                 roomCode: code,
                 content: content,
-                createdBy: createdBy
+                createdBy: request.user.name // Use the name from the authenticated user
             });
             const io = request.app.get("io");
             io.to(code).emit("new-question", question);
 
-            response.json(question);
-        } catch (error) {
+            response.status(201).json(question);
+        } catch (error)
+        {
             console.log(error);
             response.status(500).json({ message: 'Internal server error' });
         }
@@ -76,40 +82,26 @@ const roomController = {
         }
     },
 
-    //DeleteRoom
-    deleteRoom: async (req, res) => {
-        try {
-            const { roomId } = req.params;
-            const room = await Rooms.findOneAndDelete({ _id: roomId, user: req.user._id });
-            if (!room) {
-                return res.status(404).json({
-                    message: 'Room is not there in database'
-                });
-            }
-            await Questions.deleteMany({ room: roomId, user: req.user._id }); //delete related questions
-            res.status(500).json({ error: err.message });
-        } catch (error) {
-            console.log(error);
-            res.status(500).json({ message: 'Internal Server Error' });
-        }
-    },
-
     //DeleteQuestion
     deleteQuestion: async (req, res) => {
         try {
             const { questionId } = req.params;
-
-            const question = await Questions.findByIdAndDelete(questionId);
+            const question = await Questions.findById(questionId);
 
             if (!question) {
-                return res.status(404).json({
-                    message: 'Question not found in database',
-                });
+                return res.status(404).json({ message: 'Question not found' });
             }
 
-            res.status(200).json({
-                message: 'Question Deleted',
-            });
+            const room = await Rooms.findOne({ roomCode: question.roomCode });
+
+            // Authorization Check: Only the user who created the room can delete questions
+            if (room.createdBy._id.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ message: 'User not authorized to delete questions in this room' });
+            }
+            
+            await question.deleteOne();
+
+            res.status(200).json({ message: 'Question Deleted', questionId: questionId });
         } catch (error) {
             console.log(error);
             res.status(500).json({ message: 'Internal Server Error' });
