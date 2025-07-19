@@ -111,6 +111,3 @@ This project is built as a MERN (MongoDB, Express, React, Node.js) stack applica
 5.  **Summarize Questions (Host):** As the host, a "Summarize Questions with AI" button will be visible. Clicking this will send all current questions to the Gemini API for summarization, and the generated top questions will be displayed.
 6.  **Delete Questions (Host):** The host also has the ability to delete individual questions from the list.
 
-## License
-
-This project is licensed under the ISC License. See the `LICENSE` file in the root of the repository for full details.
